@@ -12,7 +12,7 @@ local let info 't ((<=): t -> t -> bool) (x:t) (y:t) : i32 =
      if y <= x then 0 else -1
   else 1
 
-local let tripit x =
+local let tripit (x: i32): (i32,i32,i32) =
   if x < 0 then (1,0,0)
   else if x > 0 then (0,0,1) else (0,1,0)
 
