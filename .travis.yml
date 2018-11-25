@@ -17,7 +17,7 @@ install:
   - futhark-pkg sync
 
 script:
-  - futhark-test lib
+  - futhark-test --notty lib
   - futhark-pkg upgrade
   - futhark-pkg sync
-  - futhark-test lib
+  - futhark-test --notty --pass-compiler-option=--Werror lib
