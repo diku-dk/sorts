@@ -14,10 +14,10 @@ before_install:
  - (cd futhark-nightly-linux-x86_64/ && PREFIX=$HOME/.local make install)
 
 install:
-  - futhark-pkg sync
+  - futhark pkg sync
 
 script:
-  - futhark-test --notty lib
-  - futhark-pkg upgrade
-  - futhark-pkg sync
-  - futhark-test --notty --pass-compiler-option=--Werror lib
+  - futhark test --notty lib
+  - futhark pkg upgrade
+  - futhark pkg sync
+  - futhark test --notty --pass-compiler-option=--Werror lib
