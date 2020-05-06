@@ -51,7 +51,7 @@ let radix_sort [n] 't (num_bits: i32) (get_bit: i32 -> t -> i32)
                       (xs: [n]t): [n]t =
   if n == 0
   then xs
-  else loop xs for i < num_bits/2 do radix_sort_step xs get_bit (i*2)
+  else loop xs for i < (num_bits+2-1)/2 do radix_sort_step xs get_bit (i*2)
 
 let with_indices [n] 'a (xs: [n]a) : [n](a, i32) =
   zip xs (iota n)
