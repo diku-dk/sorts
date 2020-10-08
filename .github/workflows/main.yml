@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [ master ]
+
+  push:
+    branches: [ master ]
+
+jobs:
+  test-nightly-c:
+    runs-on: ubuntu-20.04
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y opencl-headers nvidia-cuda-dev nvidia-opencl-dev oclgrind
+
+    - name: Install futhark
+      run: |
+        wget https://futhark-lang.org/releases/futhark-nightly-linux-x86_64.tar.xz
+        tar xvf futhark-nightly-linux-x86_64.tar.xz
+        make -C futhark-nightly-linux-x86_64/ install PREFIX=$HOME/.local
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+    - name: Run tests
+      run: |
+        futhark pkg sync
+        futhark test -c --backend=c .
