@@ -1,4 +1,4 @@
-# Futhark sorting implementations [![Build Status](https://travis-ci.org/diku-dk/sorts.svg?branch=master)](https://travis-ci.org/diku-dk/sorts) [![Documentation](https://futhark-lang.org/pkgs/github.com/diku-dk/sorts/status.svg)](https://futhark-lang.org/pkgs/github.com/diku-dk/sorts/latest/)
+# Futhark sorting implementations [![CI](https://github.com/diku-dk/sorts/workflows/CI/badge.svg)](https://github.com/diku-dk/sorts/actions) [![Documentation](https://futhark-lang.org/pkgs/github.com/diku-dk/sorts/status.svg)](https://futhark-lang.org/pkgs/github.com/diku-dk/sorts/latest/)
 
 This package contains various sorting algorithms implemented in
 Futhark.  Check the documentation for each file for details.
