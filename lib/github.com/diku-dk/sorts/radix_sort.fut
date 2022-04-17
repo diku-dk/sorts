@@ -32,9 +32,9 @@ local def radix_sort_step [n] 't (xs: [n]t) (get_bit: i32 -> t -> i32)
   in scatter (copy xs) is xs
 
 -- | The `num_bits` and `get_bit` arguments can be taken from one of
--- the numeric modules of module type `integral`@mtype@"/futlib/math"
--- or `float`@mtype@"/futlib/math", such as `i32`@term@"/futlib/math"
--- or `f64`@term@"/futlib/math".  However, if you know that
+-- the numeric modules of module type `integral`@mtype@"/prelude/math"
+-- or `float`@mtype@"/prelude/math", such as `i32`@term@"/prelude/math"
+-- or `f64`@term@"/prelude/math".  However, if you know that
 -- the input array only uses lower-order bits (say, if all integers
 -- are less than 100), then you can profitably pass a smaller
 -- `num_bits` value to reduce the number of sequential iterations.
@@ -69,7 +69,7 @@ def radix_sort_by_key [n] 't 'k
 
 -- | A thin wrapper around `radix_sort`@term that ensures negative
 -- integers are sorted as expected.  Simply pass the usual `num_bits`
--- and `get_bit` definitions from e.g. `i32`@term@"/futlib/math".
+-- and `get_bit` definitions from e.g. `i32`@term@"/prelude/math".
 def radix_sort_int [n] 't (num_bits: i32) (get_bit: i32 -> t -> i32)
                           (xs: [n]t): [n]t =
   let get_bit' i x =
@@ -86,8 +86,8 @@ def radix_sort_int_by_key [n] 't 'k
 
 -- | A thin wrapper around `radix_sort`@term that ensures floats are
 -- sorted as expected.  Simply pass the usual `num_bits` and `get_bit`
--- definitions from `f32`@term@"/futlib/math" and
--- `f64`@term@"/futlib/math".
+-- definitions from `f32`@term@"/prelude/math" and
+-- `f64`@term@"/prelude/math".
 def radix_sort_float [n] 't (num_bits: i32) (get_bit: i32 -> t -> i32)
                             (xs: [n]t): [n]t =
   let get_bit' i x =
