@@ -7,10 +7,6 @@ on:
   push:
     branches: [ master ]
 
-  # Run weekly to detect compiler or dependency regressions.
-  schedule:
-    - cron: "0 0 * * 0"
-
 jobs:
   test-on-nightly:
     runs-on: ubuntu-latest
