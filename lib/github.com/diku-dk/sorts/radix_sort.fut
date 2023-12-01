@@ -17,17 +17,18 @@ local def radix_sort_step [n] 't (xs: [n]t) (get_bit: i32 -> t -> i32)
   let pairwise op (a1,b1,c1,d1) (a2,b2,c2,d2) =
     (a1 `op` a2, b1 `op` b2, c1 `op` c2, d1 `op` d2)
   let bins = xs |> map num
-  let flags = bins |> map (\x -> if x == 0 then (1,0,0,0)
-                                 else if x == 1 then (0,1,0,0)
-                                 else if x == 2 then (0,0,1,0)
-                                 else (0,0,0,1))
+  let flags = bins |> map (\x ->
+      ( i64.bool (x==0)
+      , i64.bool (x==1)
+      , i64.bool (x==2)
+      , i64.bool (x==3) ) )
   let offsets = scan (pairwise (+)) (0,0,0,0) flags
   let (na,nb,nc,_nd) = last offsets
-  let f bin (a,b,c,d) = match bin
-                        case 0 -> a-1
-                        case 1 -> na+b-1
-                        case 2 -> na+nb+c-1
-                        case _ -> na+nb+nc+d-1
+  let f bin (a,b,c,d) = (-1)
+      + a * (i64.bool (bin == 0)) + na * (i64.bool (bin > 0))
+      + b * (i64.bool (bin == 1)) + nb * (i64.bool (bin > 1))
+      + c * (i64.bool (bin == 2)) + nc * (i64.bool (bin > 2))
+      + d * (i64.bool (bin == 3)) 
   let is = map2 f bins offsets
   in scatter (copy xs) is xs
 
