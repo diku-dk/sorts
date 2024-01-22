@@ -145,26 +145,30 @@ local def radix_sort_step_i16 [n] 't (xs: [n]t)
   let is = map2 f bins offsets
   in (scatter (copy xs) is xs, (na, nb, nc, nd))
 
-
-local def chunked_radix_sort_step [n] [m] 't
+local def chunked_radix_sort_step [n] [m] [r] 't
                           (get_bit: i32 -> t -> i32)
                           (digit_n: i32)
-                          (xs: *[n*m]t) =
+                          (xs: *[n*m+r]t) =
   let hist_size = 4
-  let (xs', histograms) =
-    unflatten xs
-    |> map (
-         \arr ->
-           let (ys, (a, b, c, d)) =
-             radix_sort_step_i16 arr get_bit digit_n
-           let hist' = sized hist_size [i64.i16 a
-                                       ,i64.i16 b
-                                       ,i64.i16 c
-                                       ,i64.i16 d]
-           in (ys, hist')
-       )
+  let sort_step  arr =
+    let (ys, (a, b, c, d)) =
+      radix_sort_step_i16 arr get_bit digit_n
+    let hist' = sized hist_size [i64.i16 a
+                                ,i64.i16 b
+                                ,i64.i16 c
+                                ,i64.i16 d]
+    in (ys, hist')
+  let (chunks, rest) = split xs
+  let (sorted_rest, hist_rest) =
+    if r == 0
+    then ([], sized hist_size [0, 0, 0, 0])
+    else sort_step rest
+  let (sorted_chunks, hist_chunks) =
+    unflatten chunks
+    |> map sort_step
     |> unzip
-  let ys = flatten xs'
+  let histograms = hist_chunks ++ [hist_rest]
+  let ys = flatten sorted_chunks ++ sorted_rest
   let flat_trans_hist =
     histograms
     |> transpose
@@ -172,14 +176,14 @@ local def chunked_radix_sort_step [n] [m] 't
   let flat_hist =
     histograms
     |> flatten
-    |> sized (hist_size * n)
+    |> sized (hist_size * (n + 1))
   let (flat_trans_hist_scan, flat_hist_scan) =
     zip flat_trans_hist flat_hist
     |> exscan (\(a, b) (x, y) -> (a + x, b + y)) (0, 0)
     |> unzip
   let hist_scan =
     flat_hist_scan
-    |> sized (n * hist_size)
+    |> sized ((n + 1) * hist_size)
     |> unflatten
   let trans_hist_scan =
     flat_trans_hist_scan
@@ -193,7 +197,7 @@ local def chunked_radix_sort_step [n] [m] 't
         let old_offset = hist_scan[i / m][bin]
         let idx = (i - old_offset) + new_offset
         in (idx, elem)
-    ) (iota (n * m))
+    ) (iota (n * m + r))
     |> unzip
   in scatter xs is elems
 
@@ -222,57 +226,52 @@ local def (////) (a: i64) (b: i64) : i64 =
 -- pp. 1-10, doi: 10.1109/IPDPS.2009.5161005.
 def chunked_radix_sort [n] 't
                        (chunk: i16)
-                       (highest: t)
                        (num_bits: i32)
                        (get_bit: i32 -> t -> i32)
                        (xs: [n]t): [n]t =
   let iters = if n == 0 then 0 else (num_bits + 2 - 1) / 2
   let chunk = i64.i16 chunk
-  let n_chunks = n //// chunk
-  let padding = replicate (n_chunks * chunk - n) highest
-  let xs = sized (n_chunks * chunk) (xs ++ padding)
-  in take n <|
-     loop xs for i < iters do
+  let n_chunks = n / chunk
+  let rest = n % chunk
+  let xs = sized (n_chunks * chunk + rest) xs
+  in sized n <|
+     loop xs = copy xs for i < iters do
        chunked_radix_sort_step get_bit (i * 2) xs
 
 -- | Like `radix_sort_by_key` but chunked.
 def chunked_radix_sort_by_key [n] 't 'k
                               (chunk: i16)
-                              (highest: k)
                               (key: t -> k)
                               (num_bits: i32)
                               (get_bit: i32 -> k -> i32)
                               (xs: [n]t): [n]t =
-  let sorter = chunked_radix_sort chunk (highest, -1)
+  let sorter = chunked_radix_sort chunk
   in by_key_wrapper sorter key num_bits get_bit xs
 
 -- | Like `radix_sort_by_int` but chunked.
 def chunked_radix_sort_int [n] 't
                            (chunk: i16)
-                           (highest: t)
                            (num_bits: i32)
                            (get_bit: i32 -> t -> i32)
                            (xs: [n]t): [n]t =
   let get_bit' i x =
     let b = get_bit i x
     in if i == num_bits-1 then b ^ 1 else b
-  in chunked_radix_sort chunk highest num_bits get_bit' xs
+  in chunked_radix_sort chunk num_bits get_bit' xs
 
 -- | Like `radix_sort_int_by_key` but chunked.
 def chunked_radix_sort_int_by_key [n] 't 'k
                                   (chunk: i16)
-                                  (highest: k)
                                   (key: t -> k)
                                   (num_bits: i32)
                                   (get_bit: i32 -> k -> i32)
                                   (xs: [n]t): [n]t =
-  let sorter = chunked_radix_sort_int chunk (highest, -1)
+  let sorter = chunked_radix_sort_int chunk
   in by_key_wrapper sorter key num_bits get_bit xs
 
 -- | Like `radix_sort_float` but chunked.
 def chunked_radix_sort_float [n] 't
                              (chunk: i16)
-                             (highest: t)
                              (num_bits: i32)
                              (get_bit: i32 -> t -> i32)
                              (xs: [n]t): [n]t =
@@ -280,15 +279,14 @@ def chunked_radix_sort_float [n] 't
     let b = get_bit i x
     in if get_bit (num_bits-1) x == 1 || i == num_bits-1
        then b ^ 1 else b
-  in chunked_radix_sort chunk highest num_bits get_bit' xs
+  in chunked_radix_sort chunk num_bits get_bit' xs
 
 -- | Like `radix_sort_float_by_key` but chunked.
 def chunked_radix_sort_float_by_key [n] 't 'k
                                     (chunk: i16)
-                                    (highest: k)
                                     (key: t -> k)
                                     (num_bits: i32)
                                     (get_bit: i32 -> k -> i32)
                                     (xs: [n]t): [n]t =
-  let sorter = chunked_radix_sort_float chunk (highest, -1)
+  let sorter = chunked_radix_sort_float chunk
   in by_key_wrapper sorter key num_bits get_bit xs

@@ -83,7 +83,7 @@ entry is_stable [n] (arrs : [][n]u8) : bool =
 -- output { [-2,-1,-1,0,1,2,3,3,4,5] }
 
 entry chunked_sort_i32 =
-  chunked_radix_sort_int 3 i32.highest i32.num_bits i32.get_bit
+  chunked_radix_sort_int 3 i32.num_bits i32.get_bit
 
 -- ==
 -- entry: chunked_sort_u16
@@ -91,7 +91,7 @@ entry chunked_sort_i32 =
 -- output { [-1u16,1u16,2u16,3u16,4u16,5u16] }
 
 entry chunked_sort_u16 =
-  chunked_radix_sort_int 3 u16.highest u16.num_bits u16.get_bit
+  chunked_radix_sort_int 3 u16.num_bits u16.get_bit
 
 -- ==
 -- entry: chunked_sort_f32
@@ -99,7 +99,7 @@ entry chunked_sort_u16 =
 -- output { [-2f32,-1f32,2f32,3f32,4f32,5f32] }
 
 entry chunked_sort_f32 =
-  chunked_radix_sort_float 3 f32.highest f32.num_bits f32.get_bit
+  chunked_radix_sort_float 3 f32.num_bits f32.get_bit
 
 -- ==
 -- entry: chunked_sort_perm_i32
@@ -108,7 +108,7 @@ entry chunked_sort_f32 =
 
 entry chunked_sort_perm_i32 [n] (xs: [n]i32) =
   zip xs (iota n)
-  |> chunked_radix_sort_int_by_key 3 i32.highest (.0) i32.num_bits i32.get_bit
+  |> chunked_radix_sort_int_by_key 3 (.0) i32.num_bits i32.get_bit
   |> map ((.1) >-> i32.i64)
 
 -- ==
@@ -118,7 +118,7 @@ entry chunked_sort_perm_i32 [n] (xs: [n]i32) =
 
 entry chunked_sort_perm_f32 [n] (xs: [n]f32) =
   zip xs (iota n)
-  |> chunked_radix_sort_float_by_key 3 f32.highest (.0) f32.num_bits f32.get_bit
+  |> chunked_radix_sort_float_by_key 3 (.0) f32.num_bits f32.get_bit
   |> map ((.1) >-> i32.i64)
 
 -- ==
@@ -129,7 +129,7 @@ entry chunked_sort_perm_f32 [n] (xs: [n]f32) =
 entry chunked_is_sorted [n] (arrs : [][n]u64) : bool =
   all (
     \arr ->
-      let result = chunked_radix_sort 3 u64.highest u64.num_bits u64.get_bit arr
+      let result = chunked_radix_sort 3 u64.num_bits u64.get_bit arr
       in tabulate n (\i -> i == 0 || result[i - 1] <= result[i])
      |> and
   ) arrs
@@ -145,7 +145,7 @@ entry chunked_is_stable [n] (arrs : [][n]u8) : bool =
       let (keys, idx) =
         map (% 5) arr
         |> flip zip (iota n)
-        |> chunked_radix_sort_by_key 3 u8.highest (.0) u8.num_bits u8.get_bit
+        |> chunked_radix_sort_by_key 3 (.0) u8.num_bits u8.get_bit
         |> unzip
       in tabulate n (\i -> i == 0 || keys[i - 1] != keys[i] || idx[i - 1] < idx[i])
          |> and
