@@ -12,7 +12,7 @@
 -- * `merge_sort`@term@"merge_sort"
 
 local def radix_sort_step [n] 't (xs: [n]t) (get_bit: i32 -> t -> i32)
-                                 (digit_n: i32): [n]t =
+                                 (digit_n: i32): ([n]t, (i64, i64, i64, i64)) =
   let num x = get_bit (digit_n+1) x * 2 + get_bit digit_n x
   let pairwise op (a1,b1,c1,d1) (a2,b2,c2,d2) =
     (a1 `op` a2, b1 `op` b2, c1 `op` c2, d1 `op` d2)
@@ -23,14 +23,14 @@ local def radix_sort_step [n] 't (xs: [n]t) (get_bit: i32 -> t -> i32)
       , i64.bool (x==2)
       , i64.bool (x==3) ) )
   let offsets = scan (pairwise (+)) (0,0,0,0) flags
-  let (na,nb,nc,_nd) = last offsets
+  let (na,nb,nc,nd) = last offsets
   let f bin (a,b,c,d) = (-1)
       + a * (i64.bool (bin == 0)) + na * (i64.bool (bin > 0))
       + b * (i64.bool (bin == 1)) + nb * (i64.bool (bin > 1))
       + c * (i64.bool (bin == 2)) + nc * (i64.bool (bin > 2))
       + d * (i64.bool (bin == 3)) 
   let is = map2 f bins offsets
-  in scatter (copy xs) is xs
+  in (scatter (copy xs) is xs, (na, nb, nc, nd))
 
 -- | The `num_bits` and `get_bit` arguments can be taken from one of
 -- the numeric modules of module type `integral`@mtype@"/prelude/math"
@@ -51,7 +51,7 @@ local def radix_sort_step [n] 't (xs: [n]t) (get_bit: i32 -> t -> i32)
 def radix_sort [n] 't (num_bits: i32) (get_bit: i32 -> t -> i32)
                       (xs: [n]t): [n]t =
   let iters = if n == 0 then 0 else (num_bits+2-1)/2
-  in loop xs for i < iters do radix_sort_step xs get_bit (i*2)
+  in loop xs for i < iters do radix_sort_step xs get_bit (i*2) |> (.0)
 
 def with_indices [n] 'a (xs: [n]a) : [n](a, i64) =
   zip xs (iota n)
@@ -117,21 +117,23 @@ local def exscan op ne xs =
   let s[0] = ne
   in s
 
-local def partition4 = intrinsics.partition 4
-  
+local def get_bin 't
+                  (get_bit: i32 -> t -> i32)
+                  (digit_n: i32)
+                  (x: t): i64  =
+  i64.i32 <| get_bit (digit_n+1) x * 2 + get_bit digit_n x
+
 local def chunked_radix_sort_step [n] [m] 't
                           (get_bit: i32 -> t -> i32)
                           (digit_n: i32)
                           (xs: *[n*m]t) =
-  let get_bin x =
-    i64.i32 <| (2 * get_bit (digit_n + 1) x) + get_bit digit_n x
   let hist_size = 4
   let (xs', histograms) =
     unflatten xs
     |> map (
          \arr ->
-           let (ys, hist) = partition4 get_bin arr
-           in (sized m ys, sized hist_size hist)
+           let (ys, hist') = radix_sort_step arr get_bit digit_n
+           in (ys, (\(a, b, c, d) -> sized hist_size [a, b, c, d]) hist')
        )
     |> unzip
   let ys = flatten xs'
@@ -158,7 +160,7 @@ local def chunked_radix_sort_step [n] [m] 't
     map (
       \i ->
         let elem = ys[i]
-        let bin = get_bin elem
+        let bin = get_bin get_bit digit_n elem
         let new_offset = trans_hist_scan[bin][i / m]
         let old_offset = hist_scan[i / m][bin]
         let idx = (i - old_offset) + new_offset
