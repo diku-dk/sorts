@@ -189,7 +189,7 @@ local def chunked_radix_sort_step [n] [m] [r] 't
     flat_trans_hist_scan
     |> unflatten
   let (is, elems) =
-    map (
+    tabulate (n * m + r) (
       \i ->
         let elem = ys[i]
         let bin = get_bin get_bit digit_n elem
@@ -197,7 +197,7 @@ local def chunked_radix_sort_step [n] [m] [r] 't
         let old_offset = hist_scan[i / m][bin]
         let idx = (i - old_offset) + new_offset
         in (idx, elem)
-    ) (iota (n * m + r))
+    )
     |> unzip
   in scatter xs is elems
 
