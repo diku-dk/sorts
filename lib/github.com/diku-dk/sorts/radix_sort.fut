@@ -208,15 +208,15 @@ local def (////) (a: i64) (b: i64) : i64 =
   a / b + i64.bool (a % b != 0)
 
 -- | This implementation of radix sort works on the outside almost like
--- `radix_sort` but the implementation is based of a design where you
--- chunk the input into subarrays [1]. This leads to performance gains
--- if you choose a good `chunk` size based on the GPU thread block.
--- Using 512 as a `chunk` size leads to about 1.5x the speed on as the
--- normal `radix_sort`. The sorting algorithm is stable and its work
--- is *O(k n)* and the span is *O(k log(n))* where *k* is the number
--- of bits in the elements being sorted. In the analysis of the
--- asymptotics we assume the `chunk` size is some constant in the
--- analysis.
+-- `radix_sort` but the implementation is based on a design where you
+-- chunk the input into subarrays [1] and sort them.
+-- This leads to performance gains if you choose a good `chunk` size
+-- based on the GPU thread block. Using 512 as a `chunk` size leads to
+-- about a 1.5x speedup compared to the normal `radix_sort`.
+-- The sorting algorithm is stable and its work is *O(k n)* and the
+-- span is *O(k log(n))* where *k* is the number of bits in the
+-- elements being sorted. In the analysis of the asymptotics we assume
+-- the `chunk` size is some constant in the analysis.
 --
 -- [1] N. Satish, M. Harris and M. Garland, "Designing efficient
 -- sorting algorithms for manycore GPUs," 2009 IEEE International
