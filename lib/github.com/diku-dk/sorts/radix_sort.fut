@@ -23,7 +23,7 @@ local def radix_sort_step [n] 't (xs: [n]t) (get_bit: i32 -> t -> i32)
       , i64.bool (x==2)
       , i64.bool (x==3) ) )
   let offsets = scan (pairwise (+)) (0,0,0,0) flags
-  let (na,nb,nc,nd) = last offsets
+  let (na,nb,nc,_nd) = last offsets
   let f bin (a,b,c,d) = (-1)
       + a * (i64.bool (bin == 0)) + na * (i64.bool (bin > 0))
       + b * (i64.bool (bin == 1)) + nb * (i64.bool (bin > 1))
