@@ -211,13 +211,11 @@ local def (////) (a: i64) (b: i64) : i64 =
 -- `radix_sort` but the implementation is based of a design where you
 -- chunk the input into subarrays [1]. This leads to performance gains
 -- if you choose a good `chunk` size based on the GPU thread block.
--- Using 512 as a `chunk` size leads to about twice the speed on
--- a RTX 3060 as the normal `radix_sort`. The implementation also
--- needs a `highest` element which is used for padding when sorting.
--- The `highest` element needs to be larger or equal to the largest
--- element in the input array. The sorting algorithm is stable and its
--- work is *O(k n)* and the span is *O(k log(n))* as in `radix_sort`
--- assuming the chunk size is some constant and not varied in the
+-- Using 512 as a `chunk` size leads to about 1.5x the speed on as the
+-- normal `radix_sort`. The sorting algorithm is stable and its work
+-- is *O(k n)* and the span is *O(k log(n))* where *k* is the number
+-- of bits in the elements being sorted. In the analysis of the
+-- asymptotics we assume the `chunk` size is some constant in the
 -- analysis.
 --
 -- [1] N. Satish, M. Harris and M. Garland, "Designing efficient
