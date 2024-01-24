@@ -118,14 +118,19 @@ local def exscan op ne xs =
   in s
 
 local def get_bin 't
+                  (k: i32)
                   (get_bit: i32 -> t -> i32)
                   (digit_n: i32)
                   (x: t): i64  =
-  i64.i32 <| get_bit (digit_n+1) x * 2 + get_bit digit_n x
-
-local def radix_sort_step_i16 [n] 't (xs: [n]t)
+  i64.i32 <|
+  loop acc = 0 for i < k do
+    acc + (get_bit (digit_n + i) x << i)
+  
+local def radix_sort_step_i16 [n] 't
                               (get_bit: i32 -> t -> i32)
-                              (digit_n: i32): ([n]t, (i16, i16, i16, i16)) =
+                              (digit_n: i32)
+                              (xs: [n]t):
+                              ([n]t, [4]i64, [4]i16) =
   let num x = i16.i32 (get_bit (digit_n+1) x * 2 + get_bit digit_n x)
   let pairwise op (a1,b1,c1,d1) (a2,b2,c2,d2) =
     (a1 `op` a2, b1 `op` b2, c1 `op` c2, d1 `op` d2)
@@ -136,65 +141,47 @@ local def radix_sort_step_i16 [n] 't (xs: [n]t)
       , i16.bool (x==2)
       , i16.bool (x==3) ) )
   let offsets = scan (pairwise (+)) (0,0,0,0) flags
-  let (na,nb,nc,nd) = last offsets
+  let (na,nb,nc,nd) = if n == 0 then (0,0,0,0) else last offsets
   let f bin (a,b,c,d) = i64.i16 ((-1)
       + a * (i16.bool (bin == 0)) + na * (i16.bool (bin > 0))
       + b * (i16.bool (bin == 1)) + nb * (i16.bool (bin > 1))
       + c * (i16.bool (bin == 2)) + nc * (i16.bool (bin > 2))
       + d * (i16.bool (bin == 3))) 
   let is = map2 f bins offsets
-  in (scatter (copy xs) is xs, (na, nb, nc, nd))
+  in (scatter (copy xs) is xs
+     ,map i64.i16 [na, nb, nc, nd]
+     ,[0, na, na + nb, na + nb + nc])
 
 local def chunked_radix_sort_step [n] [m] [r] 't
                           (get_bit: i32 -> t -> i32)
                           (digit_n: i32)
                           (xs: *[n*m+r]t) =
-  let hist_size = 4
-  let sort_step  arr =
-    let (ys, (a, b, c, d)) =
-      radix_sort_step_i16 arr get_bit digit_n
-    let hist' = sized hist_size [i64.i16 a
-                                ,i64.i16 b
-                                ,i64.i16 c
-                                ,i64.i16 d]
-    in (ys, hist')
   let (chunks, rest) = split xs
-  let (sorted_rest, hist_rest) =
-    if r == 0
-    then ([], sized hist_size [0, 0, 0, 0])
-    else sort_step rest
-  let (sorted_chunks, hist_chunks) =
+  let (sorted_rest, hist_rest, offsets_rest) =
+    radix_sort_step_i16 get_bit digit_n rest
+  let (sorted_chunks, hist_chunks, offsets_chunks) =
     unflatten chunks
-    |> map sort_step
-    |> unzip
+    |> map (radix_sort_step_i16 get_bit digit_n)
+    |> unzip3
   let histograms = hist_chunks ++ [hist_rest]
-  let ys = flatten sorted_chunks ++ sorted_rest
-  let flat_trans_hist =
+  let sorted = flatten sorted_chunks ++ sorted_rest
+  let old_offsets = offsets_chunks ++ [offsets_rest]
+  let new_offsets =
     histograms
     |> transpose
     |> flatten
-  let flat_hist =
-    histograms
-    |> flatten
-    |> sized (hist_size * (n + 1))
-  let (flat_trans_hist_scan, flat_hist_scan) =
-    zip flat_trans_hist flat_hist
-    |> exscan (\(a, b) (x, y) -> (a + x, b + y)) (0, 0)
-    |> unzip
-  let hist_scan =
-    flat_hist_scan
-    |> sized ((n + 1) * hist_size)
+    |> exscan (+) 0
     |> unflatten
-  let trans_hist_scan =
-    flat_trans_hist_scan
-    |> unflatten
+    |> transpose
   let (is, elems) =
     tabulate (n * m + r) (
       \i ->
-        let elem = ys[i]
-        let bin = get_bin get_bit digit_n elem
-        let new_offset = trans_hist_scan[bin][i / m]
-        let old_offset = hist_scan[i / m][bin]
+        let elem = sorted[i]
+        let bin = get_bin 2 get_bit digit_n elem
+        let chunk_idx = i / m
+        let new_offset = new_offsets[chunk_idx][bin]
+        let old_chunk_offset = i64.i16 old_offsets[chunk_idx][bin]
+        let old_offset = m * chunk_idx + old_chunk_offset
         let idx = (i - old_offset) + new_offset
         in (idx, elem)
     )
