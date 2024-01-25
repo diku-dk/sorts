@@ -1,5 +1,10 @@
 -- | A non-comparison-based sort that sorts an array in *O(k n)* work
 -- and *O(k log(n))* span, where *k* is the number of bits in each element.
+-- The library contains two variants of radix sort with different use
+-- cases. `blocked_radix_sort`@term should be used on large arrays,
+-- if the array is small then it may be the case that
+-- `radix_sort`@term is faster. `radix_sort`@term can also be much
+-- more suitable in cases where nested parallelism is utilized.
 --
 -- Generally, this is the sorting function we recommend for Futhark
 -- programs, but be careful about negative integers (use
@@ -152,20 +157,20 @@ local def radix_sort_step_i16 [n] 't
      ,map i64.i16 [na, nb, nc, nd]
      ,[0, na, na + nb, na + nb + nc])
 
-local def chunked_radix_sort_step [n] [m] [r] 't
+local def blocked_radix_sort_step [n] [m] [r] 't
                           (get_bit: i32 -> t -> i32)
                           (digit_n: i32)
                           (xs: *[n*m+r]t) =
-  let (chunks, rest) = split xs
+  let (blocks, rest) = split xs
   let (sorted_rest, hist_rest, offsets_rest) =
     radix_sort_step_i16 get_bit digit_n rest
-  let (sorted_chunks, hist_chunks, offsets_chunks) =
-    unflatten chunks
+  let (sorted_blocks, hist_blocks, offsets_blocks) =
+    unflatten blocks
     |> map (radix_sort_step_i16 get_bit digit_n)
     |> unzip3
-  let histograms = hist_chunks ++ [hist_rest]
-  let sorted = flatten sorted_chunks ++ sorted_rest
-  let old_offsets = offsets_chunks ++ [offsets_rest]
+  let histograms = hist_blocks ++ [hist_rest]
+  let sorted = sized (n*m+r) (flatten sorted_blocks ++ sorted_rest)
+  let old_offsets = offsets_blocks ++ [offsets_rest]
   let new_offsets =
     histograms
     |> transpose
@@ -173,20 +178,19 @@ local def chunked_radix_sort_step [n] [m] [r] 't
     |> exscan (+) 0
     |> unflatten
     |> transpose
-  let (is, elems) =
+  let is =
     tabulate (n * m + r) (
       \i ->
         let elem = sorted[i]
         let bin = get_bin 2 get_bit digit_n elem
-        let chunk_idx = i / m
-        let new_offset = new_offsets[chunk_idx][bin]
-        let old_chunk_offset = i64.i16 old_offsets[chunk_idx][bin]
-        let old_offset = m * chunk_idx + old_chunk_offset
+        let block_idx = i / m
+        let new_offset = new_offsets[block_idx][bin]
+        let old_block_offset = i64.i16 old_offsets[block_idx][bin]
+        let old_offset = m * block_idx + old_block_offset
         let idx = (i - old_offset) + new_offset
-        in (idx, elem)
+        in idx
     )
-    |> unzip
-  in scatter xs is elems
+  in scatter xs is sorted
 
 local def (///) (a: i32) (b: i32) : i32 =
   a / b + i32.bool (a % b != 0)
@@ -194,69 +198,68 @@ local def (///) (a: i32) (b: i32) : i32 =
 local def (////) (a: i64) (b: i64) : i64 =
   a / b + i64.bool (a % b != 0)
 
--- | This implementation of radix sort works on the outside almost like
--- `radix_sort` but the implementation is based on a design where you
--- chunk the input into subarrays [1] and sort them.
--- This leads to performance gains if you choose a good `chunk` size
--- based on the GPU thread block. Using 512 as a `chunk` size leads to
--- about a 1.5x speedup compared to the normal `radix_sort`.
--- The sorting algorithm is stable and its work is *O(k n)* and the
--- span is *O(k log(n))* where *k* is the number of bits in the
--- elements being sorted. In the analysis of the asymptotics we assume
--- the `chunk` size is some constant in the analysis.
+-- | This implementation of radix sort is based on an algorithm which
+-- splits the input up into blocks, sorts them and collect them [1].
+-- This leads to performance gains if you choose a good `block` size
+-- based on the GPU thread block. Using 256 as the `block` size to
+-- sort 100 million i32 with an A100 GPU leads to a 2x speedup
+-- compared to `radix_sort`@term. The sorting algorithm is stable and
+-- its work is *O(k n)* and the span is *O(k log(n))* where *k* is the
+-- number of bits in the elements being sorted. In the analysis of the
+-- asymptotics we assume the `block` size is some constant.
 --
 -- [1] N. Satish, M. Harris and M. Garland, "Designing efficient
 -- sorting algorithms for manycore GPUs," 2009 IEEE International
 -- Symposium on Parallel & Distributed Processing, Rome, Italy, 2009,
 -- pp. 1-10, doi: 10.1109/IPDPS.2009.5161005.
-def chunked_radix_sort [n] 't
-                       (chunk: i16)
+def blocked_radix_sort [n] 't
+                       (block: i16)
                        (num_bits: i32)
                        (get_bit: i32 -> t -> i32)
                        (xs: [n]t): [n]t =
   let iters = if n == 0 then 0 else (num_bits + 2 - 1) / 2
-  let chunk = i64.i16 chunk
-  let n_chunks = n / chunk
-  let rest = n % chunk
-  let xs = sized (n_chunks * chunk + rest) xs
+  let block = i64.i16 block
+  let n_blocks = n / block
+  let rest = n % block
+  let xs = sized (n_blocks * block + rest) xs
   in sized n <|
      loop xs = copy xs for i < iters do
-       chunked_radix_sort_step get_bit (i * 2) xs
+       blocked_radix_sort_step get_bit (i * 2) xs
 
--- | Like `radix_sort_by_key` but chunked.
-def chunked_radix_sort_by_key [n] 't 'k
-                              (chunk: i16)
+-- | Like `radix_sort_by_key` but blocked.
+def blocked_radix_sort_by_key [n] 't 'k
+                              (block: i16)
                               (key: t -> k)
                               (num_bits: i32)
                               (get_bit: i32 -> k -> i32)
                               (xs: [n]t): [n]t =
-  let sorter = chunked_radix_sort chunk
+  let sorter = blocked_radix_sort block
   in by_key_wrapper sorter key num_bits get_bit xs
 
--- | Like `radix_sort_by_int` but chunked.
-def chunked_radix_sort_int [n] 't
-                           (chunk: i16)
+-- | Like `radix_sort_by_int` but blocked.
+def blocked_radix_sort_int [n] 't
+                           (block: i16)
                            (num_bits: i32)
                            (get_bit: i32 -> t -> i32)
                            (xs: [n]t): [n]t =
   let get_bit' i x =
     let b = get_bit i x
     in if i == num_bits-1 then b ^ 1 else b
-  in chunked_radix_sort chunk num_bits get_bit' xs
+  in blocked_radix_sort block num_bits get_bit' xs
 
--- | Like `radix_sort_int_by_key` but chunked.
-def chunked_radix_sort_int_by_key [n] 't 'k
-                                  (chunk: i16)
+-- | Like `radix_sort_int_by_key` but blocked.
+def blocked_radix_sort_int_by_key [n] 't 'k
+                                  (block: i16)
                                   (key: t -> k)
                                   (num_bits: i32)
                                   (get_bit: i32 -> k -> i32)
                                   (xs: [n]t): [n]t =
-  let sorter = chunked_radix_sort_int chunk
+  let sorter = blocked_radix_sort_int block
   in by_key_wrapper sorter key num_bits get_bit xs
 
--- | Like `radix_sort_float` but chunked.
-def chunked_radix_sort_float [n] 't
-                             (chunk: i16)
+-- | Like `radix_sort_float` but blocked.
+def blocked_radix_sort_float [n] 't
+                             (block: i16)
                              (num_bits: i32)
                              (get_bit: i32 -> t -> i32)
                              (xs: [n]t): [n]t =
@@ -264,14 +267,14 @@ def chunked_radix_sort_float [n] 't
     let b = get_bit i x
     in if get_bit (num_bits-1) x == 1 || i == num_bits-1
        then b ^ 1 else b
-  in chunked_radix_sort chunk num_bits get_bit' xs
+  in blocked_radix_sort block num_bits get_bit' xs
 
--- | Like `radix_sort_float_by_key` but chunked.
-def chunked_radix_sort_float_by_key [n] 't 'k
-                                    (chunk: i16)
+-- | Like `radix_sort_float_by_key` but blocked.
+def blocked_radix_sort_float_by_key [n] 't 'k
+                                    (block: i16)
                                     (key: t -> k)
                                     (num_bits: i32)
                                     (get_bit: i32 -> k -> i32)
                                     (xs: [n]t): [n]t =
-  let sorter = chunked_radix_sort_float chunk
+  let sorter = blocked_radix_sort_float block
   in by_key_wrapper sorter key num_bits get_bit xs
