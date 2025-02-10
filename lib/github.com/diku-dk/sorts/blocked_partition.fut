@@ -1,10 +1,11 @@
 -- | Blocked partition.
 --
--- This module contains 
+-- This module contains
 
-local def partition_block [n] 't
-                          (p: t -> bool)
-                          (xs: [n]t) : ([n]t, [2]i64, [2]i16) =
+local
+def partition_block [n] 't
+                    (p: t -> bool)
+                    (xs: [n]t) : ([n]t, [2]i64, [2]i16) =
   let pairwise op (a1, b1) (a2, b2) = (a1 `op` a2, b1 `op` b2)
   let flags =
     xs
@@ -26,16 +27,18 @@ local def partition_block [n] 't
      , [0, na]
      )
 
-local def exscan op ne xs =
+local
+def exscan op ne xs =
   let s =
     scan op ne xs
     |> rotate (-1)
   let s[0] = ne
   in s
 
-local def blocked_partition_auxiliary [n] [m] [r] 't
-                                      (p: t -> bool)
-                                      (xs: [n * m + r]t) : ([n * m + r]t, i64) =
+local
+def blocked_partition_auxiliary [n] [m] [r] 't
+                                (p: t -> bool)
+                                (xs: [n * m + r]t) : ([n * m + r]t, i64) =
   let (blocks, rest) = split xs
   let (partitioned_rest, hist_rest, offsets_rest) =
     partition_block p rest
