@@ -1,4 +1,3 @@
-
 import "lib/github.com/diku-dk/sorts/bitonic_sort"
 import "lib/github.com/diku-dk/sorts/merge_sort"
 import "lib/github.com/diku-dk/sorts/radix_sort"
@@ -17,7 +16,7 @@ entry radix_sort_i32 = radix_sort 32 i32.get_bit
 entry blocked_radix_sort_i32 = blocked_radix_sort 256 32 i32.get_bit
 entry partition_i32 = partition (< 0i32)
 entry blocked_partition_i32 = blocked_partition 256 (< 0i32)
-                               
+
 -- 64-bit keys
 -- ==
 -- entry: bitonic_sort_i64 merge_sort_i64 radix_sort_i64 blocked_radix_sort_i64 partition_i64 blocked_partition_i64

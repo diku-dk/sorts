@@ -44,37 +44,35 @@ entry sort_perm_f32 [n] (xs: [n]f32) =
   zip xs (iota n)
   |> radix_sort_float_by_key (.0) f32.num_bits f32.get_bit
   |> map ((.1) >-> i32.i64)
-  
+
 -- ==
 -- entry: is_sorted
 -- random input { [10][50]u64 }
 -- output { true }
 
-entry is_sorted [n] (arrs : [][n]u64) : bool =
-  all (
-    \arr ->
-      let result = radix_sort u64.num_bits u64.get_bit arr
-      in tabulate n (\i -> i == 0 || result[i - 1] <= result[i])
-     |> and
-  ) arrs
+entry is_sorted [n] (arrs: [][n]u64) : bool =
+  all (\arr ->
+         let result = radix_sort u64.num_bits u64.get_bit arr
+         in tabulate n (\i -> i == 0 || result[i - 1] <= result[i])
+            |> and)
+      arrs
 
 -- ==
 -- entry: is_stable
 -- random input { [10][50]u8 }
 -- output { true }
 
-entry is_stable [n] (arrs : [][n]u8) : bool =
-  all (
-    \arr ->
-      let (keys, idx) =
-        map (% 5) arr
-        |> flip zip (iota n)
-        |> radix_sort_by_key (.0) u8.num_bits u8.get_bit
-        |> unzip
-      in tabulate n (\i -> i == 0 || keys[i - 1] != keys[i] || idx[i - 1] < idx[i])
-         |> and
-  ) arrs
-  
+entry is_stable [n] (arrs: [][n]u8) : bool =
+  all (\arr ->
+         let (keys, idx) =
+           map (% 5) arr
+           |> flip zip (iota n)
+           |> radix_sort_by_key (.0) u8.num_bits u8.get_bit
+           |> unzip
+         in tabulate n (\i -> i == 0 || keys[i - 1] != keys[i] || idx[i - 1] < idx[i])
+            |> and)
+      arrs
+
 -- ==
 -- entry: blocked_sort_i32
 -- input { [5,4,3,2,1,0,-1,-2] }
@@ -126,27 +124,25 @@ entry blocked_sort_perm_f32 [n] (xs: [n]f32) =
 -- random input { [10][50]u64 }
 -- output { true }
 
-entry blocked_is_sorted [n] (arrs : [][n]u64) : bool =
-  all (
-    \arr ->
-      let result = blocked_radix_sort 3 u64.num_bits u64.get_bit arr
-      in tabulate n (\i -> i == 0 || result[i - 1] <= result[i])
-     |> and
-  ) arrs
+entry blocked_is_sorted [n] (arrs: [][n]u64) : bool =
+  all (\arr ->
+         let result = blocked_radix_sort 3 u64.num_bits u64.get_bit arr
+         in tabulate n (\i -> i == 0 || result[i - 1] <= result[i])
+            |> and)
+      arrs
 
 -- ==
 -- entry: blocked_is_stable
 -- random input { [10][50]u8 }
 -- output { true }
 
-entry blocked_is_stable [n] (arrs : [][n]u8) : bool =
-  all (
-    \arr ->
-      let (keys, idx) =
-        map (% 5) arr
-        |> flip zip (iota n)
-        |> blocked_radix_sort_by_key 3 (.0) u8.num_bits u8.get_bit
-        |> unzip
-      in tabulate n (\i -> i == 0 || keys[i - 1] != keys[i] || idx[i - 1] < idx[i])
-         |> and
-  ) arrs
+entry blocked_is_stable [n] (arrs: [][n]u8) : bool =
+  all (\arr ->
+         let (keys, idx) =
+           map (% 5) arr
+           |> flip zip (iota n)
+           |> blocked_radix_sort_by_key 3 (.0) u8.num_bits u8.get_bit
+           |> unzip
+         in tabulate n (\i -> i == 0 || keys[i - 1] != keys[i] || idx[i - 1] < idx[i])
+            |> and)
+      arrs
