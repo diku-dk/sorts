@@ -1,6 +1,6 @@
 -- | Work-efficient parallel mergesort
 --
--- Author: Sam Westrick <shwestrick@gmail.com.
+-- Author: Sam Westrick <shwestrick@gmail.com>.
 
 ------------------------------------------------------------------------------
 -- Double binary search:
@@ -242,7 +242,7 @@ def merge_sort_by_key [n] 't 'k (key: t -> k) (leq: k -> k -> bool) (s: [n]t) : 
   |> merge_sort (\(x, _) (y, _) -> leq x y)
   |> map (\(_, i) -> s[i])
 
-def merge_sort_with_params_by_key [n] 't 'k params key leq (s: [n]t) : [n]t =
+def merge_sort_with_params_by_key [n] 't 'k params (key: t -> k) (leq: k -> k -> bool) (s: [n]t) : [n]t =
   zip (map key s) (iota n)
   |> merge_sort_with_params params (\(x, _) (y, _) -> leq x y)
   |> map (\(_, i) -> s[i])
