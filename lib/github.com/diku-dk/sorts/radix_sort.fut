@@ -1,5 +1,6 @@
 -- | A non-comparison-based sort that sorts an array in *O(k n)* work
 -- and *O(k log(n))* span, where *k* is the number of bits in each element.
+--
 -- The library contains two variants of radix sort with different use
 -- cases. `blocked_radix_sort`@term should be used on large arrays,
 -- if the array is small then it may be the case that
