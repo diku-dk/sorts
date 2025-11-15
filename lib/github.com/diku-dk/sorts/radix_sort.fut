@@ -225,7 +225,10 @@ def blocked_radix_sort_step [n] [m] 't
   let is =
     tabulate (n * m) (\i ->
                         let elem = sorted[i]
-                        let bin = get_bin 4 get_bit digit_n elem
+                        let bin =
+                          if i < size
+                          then get_bin 4 get_bit digit_n elem
+                          else (1 << 4) - 1
                         let block_idx = i / m
                         let new_offset = new_offsets[block_idx][bin]
                         let old_block_offset = i64.i16 old_offsets[block_idx][bin]
