@@ -165,12 +165,12 @@ def radix_sort_step_i16 [m] 't
                         (digit_n: i32)
                         (block_offset: i64)
                         (xs: [m]t) : ([m]t, [16]i64, [16]i16) =
-  let result =
+  let offset = block_offset * m
+  let sorted =
     loop ys = copy xs
     for i in 0i32..<4i32 do
       let flags =
         map2 (\j x ->
-                let offset = block_offset * m
                 let b =
                   if offset + j < size
                   then get_bit (i + digit_n) x
@@ -189,15 +189,14 @@ def radix_sort_step_i16 [m] 't
       in scatter ys (map i64.i16 is) (copy ys)
   let is =
     map2 (\j x ->
-            let offset = block_offset * m
-            in if offset + j < size
-               then get_bin 4 get_bit digit_n x
-               else (1 << 4) - 1)
+            if offset + j < size
+            then get_bin 4 get_bit digit_n x
+            else (1 << 4) - 1)
          (iota m)
          xs
   let bins = hist (+) 0 16 is (replicate m 1)
   let offsets = exscan (+) 0 bins
-  in ( result
+  in ( sorted
      , map i64.i16 bins
      , offsets
      )
