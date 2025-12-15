@@ -232,6 +232,15 @@ def merge_sort_with_params [n] 't {max_block_size, max_merge_block_size} (leq: t
 
 -----------------------------------------------------------------------------
 
+
+-- | Implements `merge_sort leq s` with reasonable default parameters. Here
+-- `leq` is a less-than-or-equal comparison function on elements of type `t`,
+-- and `s` is an array of `n` elements of type `t`. The default parameters are
+-- max_block_size = 20 and max_merge_block_size = 8.
+--
+-- Work: **O(n log n)**
+--
+-- Span: **O(log**2 n)**
 def merge_sort [n] 't (leq: t -> t -> bool) (s: [n]t) : [n]t =
   -- Note: this selection of parameters seems to work well in practice, but
   -- could be investigated more carefully.
