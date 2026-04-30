@@ -44,7 +44,7 @@ local module bucket_sort_u32 = mk_bucket_sort u32
 local module bucket_sort_i64 = mk_bucket_sort i64
 
 -- | Implementation of bucket sort. Where `m` is the number of keys
--- and `get_key` is a function which maps a key to a integer in a
+-- and `get_key` is a function which maps a value to a integer in a
 -- contiguous interval of integers from 0 to `m` - 1.
 --
 -- **Work:** *O(n ✕ W(get_key))*
