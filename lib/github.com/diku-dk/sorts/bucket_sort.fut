@@ -59,3 +59,52 @@ def bucket_sort 'k [n] (num_buckets: i64) (get_bucket: k -> i64) (xs: [n]k) : [n
   else if num_buckets <= 1i64 + i64.u32 u32.highest
   then bucket_sort_u32.sort num_buckets get_bucket xs
   else bucket_sort_i64.sort num_buckets get_bucket xs
+
+local
+def hash (x: i32) : i32 =
+  let x = u32.i32 x
+  let x = ((x >> 16) ^ x) * 0x45d9f3b
+  let x = ((x >> 16) ^ x) * 0x45d9f3b
+  let x = ((x >> 16) ^ x)
+  in i32.u32 x
+
+entry mk_input (num_buckets: i64) (n: i64) =
+  let xs =
+    iota n
+    |> map i32.i64
+    |> map hash
+    |> map i64.i32
+    |> map (% num_buckets)
+  in (num_buckets, xs)
+
+-- ==
+-- entry: bucket_sort_u8
+-- "type=u8, num_buckets=64, n=10**8" compiled notest script input { mk_input 64i64 100000000i64 }
+-- "type=u8, num_buckets=512, n=10**8" compiled notest script input { mk_input 512i64 100000000i64 }
+
+-- ==
+-- entry: bucket_sort_u16
+-- "type=u16, num_buckets=64, n=10**8" compiled notest script input { mk_input 64i64 100000000i64 }
+-- "type=u16, num_buckets=512, n=10**8" compiled notest script input { mk_input 512i64 100000000i64 }
+
+-- ==
+-- entry: bucket_sort_u32
+-- "type=u32, num_buckets=64, n=10**8" compiled notest script input { mk_input 64i64 100000000i64 }
+-- "type=u32, num_buckets=512, n=10**8" compiled notest script input { mk_input 512i64 100000000i64 }
+
+-- ==
+-- entry: bucket_sort_i64
+-- "type=i64, num_buckets=64, n=10**8" compiled notest script input { mk_input 64i64 100000000i64 }
+-- "type=i64, num_buckets=512, n=10**8" compiled notest script input { mk_input 512i64 100000000i64 }
+
+entry bucket_sort_u8 (num_buckets, xs) =
+  bucket_sort_u8.sort num_buckets id xs
+
+entry bucket_sort_u16 (num_buckets, xs) =
+  bucket_sort_u16.sort num_buckets id xs
+
+entry bucket_sort_u32 (num_buckets, xs) =
+  bucket_sort_u32.sort num_buckets id xs
+
+entry bucket_sort_i64 (num_buckets, xs) =
+  bucket_sort_i64.sort num_buckets id xs
