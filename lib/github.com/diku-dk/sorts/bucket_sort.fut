@@ -79,23 +79,31 @@ entry mk_input (num_buckets: i64) (n: i64) =
 
 -- ==
 -- entry: bucket_sort_u8
--- "type=u8, num_buckets=64, n=10**8" compiled notest script input { mk_input 64i64 100000000i64 }
--- "type=u8, num_buckets=512, n=10**8" compiled notest script input { mk_input 512i64 100000000i64 }
+-- "type=u8, n=10**7, num_buckets=64" compiled notest script input { mk_input 64i64 10000000i64 }
+-- "type=u8, n=10**7, num_buckets=512" compiled notest script input { mk_input 512i64 10000000i64 }
+-- "type=u8, n=10**8, num_buckets=64" compiled notest script input { mk_input 64i64 100000000i64 }
+-- "type=u8, n=10**8, num_buckets=512" compiled notest script input { mk_input 512i64 100000000i64 }
 
 -- ==
 -- entry: bucket_sort_u16
--- "type=u16, num_buckets=64, n=10**8" compiled notest script input { mk_input 64i64 100000000i64 }
--- "type=u16, num_buckets=512, n=10**8" compiled notest script input { mk_input 512i64 100000000i64 }
+-- "type=u16, n=10**7, num_buckets=64" compiled notest script input { mk_input 64i64 10000000i64 }
+-- "type=u16, n=10**7, num_buckets=512" compiled notest script input { mk_input 512i64 10000000i64 }
+-- "type=u16, n=10**8, num_buckets=64" compiled notest script input { mk_input 64i64 100000000i64 }
+-- "type=u16, n=10**8, num_buckets=512" compiled notest script input { mk_input 512i64 100000000i64 }
 
 -- ==
 -- entry: bucket_sort_u32
--- "type=u32, num_buckets=64, n=10**8" compiled notest script input { mk_input 64i64 100000000i64 }
--- "type=u32, num_buckets=512, n=10**8" compiled notest script input { mk_input 512i64 100000000i64 }
+-- "type=u32, n=10**7, num_buckets=64" compiled notest script input { mk_input 64i64 10000000i64 }
+-- "type=u32, n=10**7, num_buckets=512" compiled notest script input { mk_input 512i64 10000000i64 }
+-- "type=u32, n=10**8, num_buckets=64" compiled notest script input { mk_input 64i64 100000000i64 }
+-- "type=u32, n=10**8, num_buckets=512" compiled notest script input { mk_input 512i64 100000000i64 }
 
 -- ==
 -- entry: bucket_sort_i64
--- "type=i64, num_buckets=64, n=10**8" compiled notest script input { mk_input 64i64 100000000i64 }
--- "type=i64, num_buckets=512, n=10**8" compiled notest script input { mk_input 512i64 100000000i64 }
+-- "type=i64, n=10**7, num_buckets=64" compiled notest script input { mk_input 64i64 10000000i64 }
+-- "type=i64, n=10**7, num_buckets=512" compiled notest script input { mk_input 512i64 10000000i64 }
+-- "type=i64, n=10**8, num_buckets=64" compiled notest script input { mk_input 64i64 100000000i64 }
+-- "type=i64, n=10**8, num_buckets=512" compiled notest script input { mk_input 512i64 100000000i64 }
 
 entry bucket_sort_u8 (num_buckets, xs) =
   bucket_sort_u8.sort num_buckets id xs
