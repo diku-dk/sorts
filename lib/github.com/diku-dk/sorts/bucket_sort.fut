@@ -68,6 +68,7 @@ def hash (x: i32) : i32 =
   let x = ((x >> 16) ^ x)
   in i32.u32 x
 
+local
 entry mk_input (num_buckets: i64) (n: i64) =
   let xs =
     iota n
@@ -105,14 +106,22 @@ entry mk_input (num_buckets: i64) (n: i64) =
 -- "type=i64, n=10**8, num_buckets=64" compiled notest script input { mk_input 64i64 100000000i64 }
 -- "type=i64, n=10**8, num_buckets=512" compiled notest script input { mk_input 512i64 100000000i64 }
 
+local
 entry bucket_sort_u8 (num_buckets, xs) =
   bucket_sort_u8.sort num_buckets id xs
 
+local
 entry bucket_sort_u16 (num_buckets, xs) =
   bucket_sort_u16.sort num_buckets id xs
 
+local
 entry bucket_sort_u32 (num_buckets, xs) =
   bucket_sort_u32.sort num_buckets id xs
 
+local
 entry bucket_sort_i64 (num_buckets, xs) =
   bucket_sort_i64.sort num_buckets id xs
+
+-- local
+-- entry radix_sort (num_buckets, xs) =
+--  bucket_sort_i64.sort num_buckets id xs
