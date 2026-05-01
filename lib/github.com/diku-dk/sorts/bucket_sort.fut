@@ -1,3 +1,10 @@
+-- | Module with bucket sort implementation.
+--
+-- Well suited for cases where the number of buckets is small or a
+-- specific asymptotic property is needed to be fulfilled by your
+-- program like linear work with a super-constant amount of keys, i.e.
+-- `num_buckets = f(n)` is not in *O(1)*.
+
 local
 def ceil_log2 (a: i64) : i64 =
   i64.i32 (i64.num_bits - i64.clz (a - 1))
@@ -14,7 +21,7 @@ module mk_bucket_sort (I: integral) = {
       let count = replicate block_size 0i64
       in loop (rank, count)
          for j < end - start do
-           let i = get_bucket vs[j]
+           let i = get_bucket vs[start + j]
            let rank[j] = I.i64 count[i]
            let count[i] = count[i] + 1
            in (rank, count)
@@ -38,27 +45,48 @@ module mk_bucket_sort (I: integral) = {
     in sorted_values
 }
 
-local module bucket_sort_u8 = mk_bucket_sort u8
-local module bucket_sort_u16 = mk_bucket_sort u16
-local module bucket_sort_u32 = mk_bucket_sort u32
-local module bucket_sort_i64 = mk_bucket_sort i64
+local module bucket_sort_max8bit_module = mk_bucket_sort u8
+local module bucket_sort_max16bit_module = mk_bucket_sort u16
+local module bucket_sort_max32bit_module = mk_bucket_sort u32
+local module bucket_sort_max64bit_module = mk_bucket_sort i64
 
--- | Implementation of bucket sort. Where `num_buckets` is the number
--- of buckets and `get_bucket` is a function which maps a value to a
+-- | Implementation of bucket sort where `num_buckets` is the number
+-- of buckets and `get_bucket` is a function which maps a element to a
 -- integer in a contiguous interval of integers from 0 to
--- `num_buckets` - 1.
+-- `num_buckets` - 1. The function uses dynamic dispatching to select
+-- different bucket sorts algorithms depending on the number of
+-- buckets to save memory. To avoid excessive code genereration use
+-- the specialised bucket sort.
 --
 -- **Work:** *O(n ✕ W(get_bucket))*
 --
 -- **Span:** *O(num_buckets ✕ W(get_bucket) + log n)*
 def bucket_sort 'k [n] (num_buckets: i64) (get_bucket: k -> i64) (xs: [n]k) : [n]k =
   if num_buckets <= 1i64 + i64.u8 u8.highest
-  then bucket_sort_u8.sort num_buckets get_bucket xs
+  then bucket_sort_max8bit_module.sort num_buckets get_bucket xs
   else if num_buckets <= 1i64 + i64.u16 u16.highest
-  then bucket_sort_u16.sort num_buckets get_bucket xs
+  then bucket_sort_max16bit_module.sort num_buckets get_bucket xs
   else if num_buckets <= 1i64 + i64.u32 u32.highest
-  then bucket_sort_u32.sort num_buckets get_bucket xs
-  else bucket_sort_i64.sort num_buckets get_bucket xs
+  then bucket_sort_max32bit_module.sort num_buckets get_bucket xs
+  else bucket_sort_max64bit_module.sort num_buckets get_bucket xs
+
+-- | Bucket sort with maximally 256 buckets.
+def bucket_sort_max8bit 'k [n] (num_buckets: i64) (get_bucket: k -> i64) (xs: [n]k) : [n]k =
+  bucket_sort_max8bit_module.sort num_buckets get_bucket xs
+
+-- | Bucket sort with maximally 65536 buckets.
+def bucket_sort_max16bit 'k [n] (num_buckets: i64) (get_bucket: k -> i64) (xs: [n]k) : [n]k =
+  bucket_sort_max16bit_module.sort num_buckets get_bucket xs
+
+-- | Bucket sort with maximally 4294967296 buckets, you probably
+-- should never use this.
+def bucket_sort_max32bit 'k [n] (num_buckets: i64) (get_bucket: k -> i64) (xs: [n]k) : [n]k =
+  bucket_sort_max32bit_module.sort num_buckets get_bucket xs
+
+-- | Bucket sort with maximally 9223372036854775808 buckets, you
+-- probably should never use this.
+def bucket_sort_max64bit 'k [n] (num_buckets: i64) (get_bucket: k -> i64) (xs: [n]k) : [n]k =
+  bucket_sort_max64bit_module.sort num_buckets get_bucket xs
 
 local
 def hash (x: i32) : i32 =
@@ -108,20 +136,16 @@ entry mk_input (num_buckets: i64) (n: i64) =
 
 local
 entry bucket_sort_u8 (num_buckets, xs) =
-  bucket_sort_u8.sort num_buckets id xs
+  bucket_sort_max8bit num_buckets id xs
 
 local
 entry bucket_sort_u16 (num_buckets, xs) =
-  bucket_sort_u16.sort num_buckets id xs
+  bucket_sort_max16bit num_buckets id xs
 
 local
 entry bucket_sort_u32 (num_buckets, xs) =
-  bucket_sort_u32.sort num_buckets id xs
+  bucket_sort_max32bit num_buckets id xs
 
 local
 entry bucket_sort_i64 (num_buckets, xs) =
-  bucket_sort_i64.sort num_buckets id xs
-
--- local
--- entry radix_sort (num_buckets, xs) =
---  bucket_sort_i64.sort num_buckets id xs
+  bucket_sort_max64bit num_buckets id xs
