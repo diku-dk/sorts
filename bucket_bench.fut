@@ -22,20 +22,64 @@ entry mk_input (num_buckets: i64) (n: i64) =
 
 -- ==
 -- entry: bucket_sort radix_sort
--- "n=10**7, num_buckets=32" compiled notest script input { mk_input 64i64 10000000i64 }
--- "n=10**7, num_buckets=64" compiled notest script input { mk_input 64i64 10000000i64 }
--- "n=10**7, num_buckets=128" compiled notest script input { mk_input 64i64 10000000i64 }
--- "n=10**7, num_buckets=512" compiled notest script input { mk_input 512i64 10000000i64 }
--- "n=10**8, num_buckets=32" compiled notest script input { mk_input 64i64 100000000i64 }
--- "n=10**8, num_buckets=64" compiled notest script input { mk_input 64i64 100000000i64 }
--- "n=10**8, num_buckets=128" compiled notest script input { mk_input 64i64 100000000i64 }
--- "n=10**8, num_buckets=512" compiled notest script input { mk_input 512i64 100000000i64 }
--- "n=10**9, num_buckets=32" compiled notest script input { mk_input 64i64 1000000000i64 }
--- "n=10**9, num_buckets=64" compiled notest script input { mk_input 64i64 1000000000i64 }
--- "n=10**9, num_buckets=128" compiled notest script input { mk_input 64i64 1000000000i64 }
--- "n=10**9, num_buckets=512" compiled notest script input { mk_input 512i64 1000000000i64 }
+-- "n=10**7, num_buckets=32" notest script input { mk_input 64i64 10000000i64 }
+-- "n=10**7, num_buckets=64" notest script input { mk_input 64i64 10000000i64 }
+-- "n=10**7, num_buckets=128" notest script input { mk_input 64i64 10000000i64 }
+-- "n=10**7, num_buckets=512" notest script input { mk_input 512i64 10000000i64 }
+-- "n=10**8, num_buckets=32" notest script input { mk_input 64i64 100000000i64 }
+-- "n=10**8, num_buckets=64" notest script input { mk_input 64i64 100000000i64 }
+-- "n=10**8, num_buckets=128" notest script input { mk_input 64i64 100000000i64 }
+-- "n=10**8, num_buckets=512" notest script input { mk_input 512i64 100000000i64 }
+-- "n=10**9, num_buckets=32" notest script input { mk_input 64i64 1000000000i64 }
+-- "n=10**9, num_buckets=64" notest script input { mk_input 64i64 1000000000i64 }
+-- "n=10**9, num_buckets=128" notest script input { mk_input 64i64 1000000000i64 }
+-- "n=10**9, num_buckets=512" notest script input { mk_input 512i64 1000000000i64 }
 entry bucket_sort (num_buckets, xs) =
   bucket_sort num_buckets id xs
 
 entry radix_sort (num_buckets, xs) =
   radix_sort (floor_log2 num_buckets) i64.get_bit xs
+
+-- ==
+-- entry: bucket_sort_u8
+-- "type=u8, n=10**7, num_buckets=64" notest script input { mk_input 64i64 10000000i64 }
+-- "type=u8, n=10**7, num_buckets=512" notest script input { mk_input 512i64 10000000i64 }
+-- "type=u8, n=10**8, num_buckets=64" notest script input { mk_input 64i64 100000000i64 }
+-- "type=u8, n=10**8, num_buckets=512" notest script input { mk_input 512i64 100000000i64 }
+
+-- ==
+-- entry: bucket_sort_u16
+-- "type=u16, n=10**7, num_buckets=64" notest script input { mk_input 64i64 10000000i64 }
+-- "type=u16, n=10**7, num_buckets=512" notest script input { mk_input 512i64 10000000i64 }
+-- "type=u16, n=10**8, num_buckets=64" notest script input { mk_input 64i64 100000000i64 }
+-- "type=u16, n=10**8, num_buckets=512" notest script input { mk_input 512i64 100000000i64 }
+
+-- ==
+-- entry: bucket_sort_u32
+-- "type=u32, n=10**7, num_buckets=64" notest script input { mk_input 64i64 10000000i64 }
+-- "type=u32, n=10**7, num_buckets=512" notest script input { mk_input 512i64 10000000i64 }
+-- "type=u32, n=10**8, num_buckets=64" notest script input { mk_input 64i64 100000000i64 }
+-- "type=u32, n=10**8, num_buckets=512" notest script input { mk_input 512i64 100000000i64 }
+
+-- ==
+-- entry: bucket_sort_i64
+-- "type=i64, n=10**7, num_buckets=64" notest script input { mk_input 64i64 10000000i64 }
+-- "type=i64, n=10**7, num_buckets=512" notest script input { mk_input 512i64 10000000i64 }
+-- "type=i64, n=10**8, num_buckets=64" notest script input { mk_input 64i64 100000000i64 }
+-- "type=i64, n=10**8, num_buckets=512" notest script input { mk_input 512i64 100000000i64 }
+
+local
+entry bucket_sort_u8 (num_buckets, xs) =
+  bucket_sort_max8bit num_buckets id xs
+
+local
+entry bucket_sort_u16 (num_buckets, xs) =
+  bucket_sort_max16bit num_buckets id xs
+
+local
+entry bucket_sort_u32 (num_buckets, xs) =
+  bucket_sort_max32bit num_buckets id xs
+
+local
+entry bucket_sort_i64 (num_buckets, xs) =
+  bucket_sort_max64bit num_buckets id xs
