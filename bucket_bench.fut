@@ -82,4 +82,4 @@ entry bucket_sort_u32 (num_buckets, xs) =
 
 local
 entry bucket_sort_i64 (num_buckets, xs) =
-  bucket_sort_max64bit num_buckets id xs
+  bucket_sort_max63bit num_buckets id xs
