@@ -6,10 +6,6 @@
 -- `num_buckets = f(n)` is not in *O(1)*.
 
 local
-def ceil_log2 (a: i64) : i64 =
-  i64.i32 (i64.num_bits - i64.clz (a - 1))
-
-local
 module mk_bucket_sort (I: integral) = {
   def sort 'a [n] (num_buckets: i64) (get_bucket: a -> i64) (vs: [n]a) : [n]a =
     let block_size = num_buckets
@@ -48,7 +44,7 @@ module mk_bucket_sort (I: integral) = {
 local module bucket_sort_max8bit_module = mk_bucket_sort u8
 local module bucket_sort_max16bit_module = mk_bucket_sort u16
 local module bucket_sort_max32bit_module = mk_bucket_sort u32
-local module bucket_sort_max64bit_module = mk_bucket_sort i64
+local module bucket_sort_max63bit_module = mk_bucket_sort i64
 
 -- | Implementation of bucket sort where `num_buckets` is the number
 -- of buckets and `get_bucket` is a function which maps a element to a
@@ -68,7 +64,7 @@ def bucket_sort 'k [n] (num_buckets: i64) (get_bucket: k -> i64) (xs: [n]k) : [n
   then bucket_sort_max16bit_module.sort num_buckets get_bucket xs
   else if num_buckets <= 1i64 + i64.u32 u32.highest
   then bucket_sort_max32bit_module.sort num_buckets get_bucket xs
-  else bucket_sort_max64bit_module.sort num_buckets get_bucket xs
+  else bucket_sort_max63bit_module.sort num_buckets get_bucket xs
 
 -- | Bucket sort with maximally 256 buckets.
 def bucket_sort_max8bit 'k [n] (num_buckets: i64) (get_bucket: k -> i64) (xs: [n]k) : [n]k =
@@ -85,5 +81,5 @@ def bucket_sort_max32bit 'k [n] (num_buckets: i64) (get_bucket: k -> i64) (xs: [
 
 -- | Bucket sort with maximally 9223372036854775808 buckets, you
 -- probably should never use this.
-def bucket_sort_max64bit 'k [n] (num_buckets: i64) (get_bucket: k -> i64) (xs: [n]k) : [n]k =
-  bucket_sort_max64bit_module.sort num_buckets get_bucket xs
+def bucket_sort_max63bit 'k [n] (num_buckets: i64) (get_bucket: k -> i64) (xs: [n]k) : [n]k =
+  bucket_sort_max63bit_module.sort num_buckets get_bucket xs
