@@ -1,5 +1,5 @@
 package github.com/diku-dk/sorts
 
 require {
-  github.com/diku-dk/segmented 0.5.1 #8246db5c9ac1a5bd20a5f24d9b03a2fd44e9d164
+  github.com/diku-dk/segmented 0.5.3 #c96450f95a1e43e0906366a1dab45cb18220a643
 }
