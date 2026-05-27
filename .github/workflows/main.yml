@@ -8,13 +8,15 @@ on:
     branches: [ master ]
 
 jobs:
-  test-on-nightly:
+  test-on-latest:
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
 
     - uses: diku-dk/install-futhark@v1.1.0
+      with:
+        version: 'latest'
 
     - run: futhark pkg sync
 
