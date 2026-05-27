@@ -1,13 +1,6 @@
 -- | ignore
 
-def count p = map p >-> map i64.bool >-> i64.sum
-
-def correct_sort 'a [n] (sort: [n]a -> [n]a) (lte: a -> a -> bool) (xs: [n]a) : bool =
-  let xs' = sort xs
-  let eql x y = lte x y && lte y x
-  in and (tabulate n (\i -> i == 0 || (xs'[i - 1] `lte` xs'[i])))
-     && all (\x -> count (eql x) xs' == count (eql x) xs) xs'
-
+import "test_utils"
 import "radix_sort"
 
 -- ==
